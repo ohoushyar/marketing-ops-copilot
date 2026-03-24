@@ -1,11 +1,12 @@
 import uuid
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import text
 
 from packages.core.db import Base, engine, SessionLocal
 from packages.core.ingest import ingest_dir
+from packages.core.ollama import OllamaError
 from packages.core.rag import answer
 from packages.core.models import Run
 
@@ -40,7 +41,10 @@ async def ingest(req: IngestRequest):
 @app.post("/chat")
 async def chat(req: ChatRequest):
     with SessionLocal() as session:
-        res = await answer(session, req.question)
+        try:
+            res = await answer(session, req.question)
+        except OllamaError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
         run_id = str(uuid.uuid4())
         session.add(Run(id=run_id, kind="chat", input=req.question, output=res["answer"]))
         session.commit()
