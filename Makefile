@@ -37,7 +37,7 @@ down:
 	docker compose down
 
 pull-models:
-	docker compose exec -T ollama ollama pull $${OLLAMA_CHAT_MODEL:-llama3.1:8b}
+	docker compose exec -T ollama ollama pull $${OLLAMA_CHAT_MODEL:-llama3.2:1b}
 	docker compose exec -T ollama ollama pull $${OLLAMA_EMBED_MODEL:-nomic-embed-text}
 
 dev:
