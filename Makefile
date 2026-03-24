@@ -57,6 +57,6 @@ fmt:
 	$(RUFF) format .
 
 test:
-	$(PYTEST)
+	set -a; [ -f .env ] && source .env; set +a; $(PYTEST)
 
 .PHONY: help venv up down pull-models dev ingest ask lint fmt test
