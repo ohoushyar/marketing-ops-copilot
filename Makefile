@@ -50,6 +50,19 @@ ask:
 	@if [ -z "$(Q)" ]; then echo "Usage: make ask Q='your question' [C=1]"; exit 1; fi
 	@if [ "$(C)" = "1" ]; then $(COPILOT) ask "$(Q)" --citations; else $(COPILOT) ask "$(Q)"; fi
 
+kpi:
+	@if [ -z "$(WEEK)" ]; then echo "Usage: make kpi WEEK=YYYY-MM-DD [BY=campaign] [DATA=data]"; exit 1; fi
+	$(COPILOT) kpi --week "$(WEEK)" --by "$${BY:-campaign}" --data-dir "$${DATA:-data}"
+
+investigate:
+	@if [ -z "$(WEEK)" ]; then echo "Usage: make investigate WEEK=YYYY-MM-DD Q='...' [BY=campaign] [N=5] [DATA=data]"; exit 1; fi
+	@if [ -z "$(Q)" ]; then echo "Usage: make investigate WEEK=YYYY-MM-DD Q='...' [BY=campaign] [N=5] [DATA=data]"; exit 1; fi
+	$(COPILOT) investigate "$(Q)" --week "$(WEEK)" --by "$${BY:-campaign}" --n "$${N:-5}" --data-dir "$${DATA:-data}"
+
+
+gen-data:
+	$(PY) scripts/generate_mock_data.py
+
 lint:
 	$(RUFF) check .
 
@@ -59,4 +72,4 @@ fmt:
 test:
 	set -a; [ -f .env ] && source .env; set +a; $(PYTEST)
 
-.PHONY: help venv up down pull-models dev ingest ask lint fmt test
+.PHONY: help venv up down pull-models dev ingest ask lint fmt test kpi investigate gen-data
