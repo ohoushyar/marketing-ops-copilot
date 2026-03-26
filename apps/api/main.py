@@ -78,14 +78,14 @@ async def chat(req: ChatRequest):
     res["run_id"] = run_id
     return res
 
-@app.post("/weekly_kpis")
+@app.post("/analytics/weekly_kpis")
 def weekly_kpis(req: WeeklyKpisRequest):
     bundle = load_data(req.data_dir)
     df_daily = daily_kpis(bundle)
     df_week = weekly_aggregate(df_daily, week_start=req.week_start, by=req.by)
     return {"rows": df_week.to_dict(orient="records")}
 
-@app.post("/kpi_delta")
+@app.post("/analytics/kpi_delta")
 def kpi_delta(req: KpiDeltaRequest):
     bundle = load_data(req.data_dir)
     df_daily = daily_kpis(bundle)
@@ -96,7 +96,7 @@ def kpi_delta(req: KpiDeltaRequest):
     delta = kpi_delta_fn(a, b, by=req.by)
     return {"rows": delta.to_dict(orient="records")}
 
-@app.post("/top_movers")
+@app.post("/analytics/top_movers")
 def top_movers(req: TopMoversRequest):
     bundle = load_data(req.data_dir)
     df_daily = daily_kpis(bundle)
@@ -114,3 +114,14 @@ def top_movers(req: TopMoversRequest):
 
     movers = top_movers_fn(delta, kpi=req.kpi, n=req.n, ascending=ascending)
     return {"rows": movers.to_dict(orient="records")}
+
+class InvestigateRequest(BaseModel):
+    question: str
+    week_start: str
+    data_dir: str = "data"
+
+@app.post("/analytics/investigate")
+async def analytics_investigate(req: InvestigateRequest):
+    from packages.core.analytics.investigate import investigate as investigate_fn
+    res = await investigate_fn(req.question, req.week_start, data_dir=req.data_dir)
+    return res
