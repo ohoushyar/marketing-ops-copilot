@@ -58,67 +58,47 @@ def kpi(
 ):
     by_cols = [b.strip() for b in by.split(",") if b.strip()]
     payload = {"week_start": week, "by": by_cols, "data_dir": data_dir}
-    resp = _post("/weekly_kpis", payload, timeout=120)
+    resp = _post("/analytics/weekly_kpis", payload, timeout=120)
     _print_table(resp["rows"])
 
 
 @app.command()
 def investigate(
-    question: str = typer.Argument(..., help="Investigation prompt (v1 runs a fixed analytics playbook)"),
+    question: str = typer.Argument(..., help="Investigation prompt (LLM + tools)"),
     week: str = typer.Option(..., "--week", help="YYYY-MM-DD for current week window"),
     by: str = typer.Option("campaign", "--by", help="Comma-separated group-by columns"),
     data_dir: str = typer.Option("data", "--data-dir", help="Directory containing CSV exports"),
-    n: int = typer.Option(5, "--n", help="How many movers to show"),
+    n: int = typer.Option(5, "--n", help="How many movers to show (hint to planner)"),
+    show_tools: bool = typer.Option(True, "--show-tools/--no-show-tools", help="Print tool outputs"),
 ):
     """
-    v1 deterministic investigation:
-    - compares prior week vs selected week
-    - prints delta rows (limited)
-    - prints top movers where CAC worsened
+    Day 4 investigation:
+    - calls /analytics/investigate which uses the LLM to plan tool calls
+    - API executes tools deterministically (pandas)
+    - API returns answer + tool_runs for grounding
     """
-    _ = question  # reserved for Day 4 (LLM tool selection). Keep it for UX continuity.
-
-    week_b = date.fromisoformat(week)
-    week_a = week_b - timedelta(days=7)
-
     by_cols = [b.strip() for b in by.split(",") if b.strip()]
 
-    delta_rows = _post(
-        "/kpi_delta",
+    resp = _post(
+        "/analytics/investigate",
         {
-            "week_a_start": week_a.isoformat(),
-            "week_b_start": week_b.isoformat(),
+            "question": question,
+            "week_start": week,
             "by": by_cols,
-            "data_dir": data_dir,
-        },
-        timeout=120,
-    )["rows"]
-
-    typer.echo(f"\nWeek A: {week_a.isoformat()}  vs  Week B: {week_b.isoformat()}\n")
-    typer.echo("Delta (first 20 rows):")
-    _print_table(delta_rows, limit=20)
-
-    movers = _post(
-        "/top_movers",
-        {
-            "week_a_start": week_a.isoformat(),
-            "week_b_start": week_b.isoformat(),
-            "by": by_cols,
-            "kpi": "cac",
             "n": n,
-            "direction": "worsened",
             "data_dir": data_dir,
         },
-        timeout=120,
-    )["rows"]
+        timeout=300,
+    )
 
-    typer.echo(f"\nTop {n} movers (CAC worsened):")
-    _print_table(movers)
+    typer.echo(resp["answer"])
 
-    typer.echo("\nNext checks (suggested):")
-    typer.echo("- Verify spend mix changes (channel/campaign)")
-    typer.echo("- Check CTR and CVR deltas for the worst movers")
-    typer.echo("- Check if budget changes happened mid-week (if you log them)")
+    if show_tools:
+        typer.echo("\nTool runs:")
+        for i, tr in enumerate(resp.get("tool_runs", []), start=1):
+            typer.echo(f"\n[{i}] tool={tr.get('tool')}")
+            typer.echo(f"input={tr.get('input')}")
+            _print_table(tr.get("rows", []), limit=20)
 
 
 if __name__ == "__main__":
