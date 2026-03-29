@@ -101,5 +101,12 @@ def investigate(
             _print_table(tr.get("rows", []), limit=20)
 
 
+@app.command()
+def eval():
+    import subprocess
+    import sys
+    raise SystemExit(subprocess.call([sys.executable, "scripts/eval.py"]))
+
+
 if __name__ == "__main__":
     app()

@@ -1,0 +1,6 @@
+{"id":"rag_utm_required","kind":"rag","question":"What UTMs are required and what formatting rules do we follow?","must_cite":["docs/docs_utm_policy.md"]}
+{"id":"rag_budget_limits","kind":"rag","question":"What are the daily budget increase thresholds?","must_cite":["docs/docs_budget_change_process.md"]}
+{"id":"rag_refusal_unknown","kind":"rag","question":"What is our TikTok creative policy?","expect_refusal":true}
+
+{"id":"ana_weekly_kpis","kind":"analytics","question":"Summarize weekly performance by campaign.","week_start":"2026-03-16"}
+{"id":"ana_cac_why","kind":"analytics","question":"Why did CAC rise last week? Identify the worst campaigns.","week_start":"2026-03-16"}

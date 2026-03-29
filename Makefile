@@ -73,3 +73,8 @@ test:
 	set -a; [ -f .env ] && source .env; set +a; $(PYTEST)
 
 .PHONY: help venv up down pull-models dev ingest ask lint fmt test kpi investigate gen-data
+
+eval:
+	$(VENV)/bin/python scripts/eval.py
+
+.PHONY: eval
