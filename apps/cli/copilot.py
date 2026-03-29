@@ -53,8 +53,12 @@ def ask(question: str, citations: bool = typer.Option(False, "--citations")):
 @app.command()
 def kpi(
     week: str = typer.Option(..., "--week", help="YYYY-MM-DD start of 7-day window"),
-    by: str = typer.Option("campaign", "--by", help="Comma-separated group-by columns (e.g. campaign,channel)"),
-    data_dir: str = typer.Option("data", "--data-dir", help="Directory containing spend.csv/clicks.csv/conversions.csv"),
+    by: str = typer.Option(
+        "campaign", "--by", help="Comma-separated group-by columns (e.g. campaign,channel)"
+    ),
+    data_dir: str = typer.Option(
+        "data", "--data-dir", help="Directory containing spend.csv/clicks.csv/conversions.csv"
+    ),
 ):
     by_cols = [b.strip() for b in by.split(",") if b.strip()]
     payload = {"week_start": week, "by": by_cols, "data_dir": data_dir}
@@ -69,7 +73,9 @@ def investigate(
     by: str = typer.Option("campaign", "--by", help="Comma-separated group-by columns"),
     data_dir: str = typer.Option("data", "--data-dir", help="Directory containing CSV exports"),
     n: int = typer.Option(5, "--n", help="How many movers to show (hint to planner)"),
-    show_tools: bool = typer.Option(True, "--show-tools/--no-show-tools", help="Print tool outputs"),
+    show_tools: bool = typer.Option(
+        True, "--show-tools/--no-show-tools", help="Print tool outputs"
+    ),
 ):
     """
     Day 4 investigation:
@@ -105,6 +111,7 @@ def investigate(
 def eval():
     import subprocess
     import sys
+
     raise SystemExit(subprocess.call([sys.executable, "scripts/eval.py"]))
 
 

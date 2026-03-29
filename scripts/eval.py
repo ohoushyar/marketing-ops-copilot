@@ -8,10 +8,12 @@ import httpx
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
 
+
 def post(path: str, payload: dict, timeout: float = 300.0) -> dict:
     r = httpx.post(f"{API_BASE_URL}{path}", json=payload, timeout=timeout)
     r.raise_for_status()
     return r.json()
+
 
 def load_cases(path: str) -> list[dict]:
     cases = []
@@ -22,9 +24,11 @@ def load_cases(path: str) -> list[dict]:
         cases.append(json.loads(line))
     return cases
 
+
 def is_refusal(ans: str) -> bool:
     s = ans.lower()
     return "i don't have enough information" in s or "i don't know" in s
+
 
 def main() -> int:
     cases = load_cases("evals/golden.jsonl")
@@ -85,12 +89,16 @@ def main() -> int:
                         if "campaign" in row:
                             campaigns.add(str(row["campaign"]))
 
-                mentions_campaign = any((camp in ans) for camp in list(campaigns)[:20]) if campaigns else False
+                mentions_campaign = (
+                    any((camp in ans) for camp in list(campaigns)[:20]) if campaigns else False
+                )
                 ok = has_rows and (mentions_campaign or len(campaigns) == 0)
-                
+
                 if not ok:
                     print(f"  Answer: {ans[:150]}")
-                    print(f"  Has rows: {has_rows}, Campaigns: {list(campaigns)[:5]}, Mentions: {mentions_campaign}")
+                    print(
+                        f"  Has rows: {has_rows}, Campaigns: {list(campaigns)[:5]}, Mentions: {mentions_campaign}"
+                    )
 
                 if ok:
                     ana_pass += 1
@@ -100,7 +108,7 @@ def main() -> int:
 
         passed += int(ok)
         status = "PASS" if ok else "FAIL"
-        print(f"{status} {c.get('id','(no id)')} [{kind}]")
+        print(f"{status} {c.get('id', '(no id)')} [{kind}]")
 
     print("\nSummary")
     print(f"Total: {passed}/{total}")
@@ -110,6 +118,7 @@ def main() -> int:
         print(f"Analytics: {ana_pass}/{ana_total}")
 
     return 0 if passed == total else 1
+
 
 if __name__ == "__main__":
     raise SystemExit(main())

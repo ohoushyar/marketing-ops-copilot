@@ -6,11 +6,13 @@ import pandas as pd
 
 random.seed(7)
 
+
 def daterange(start: date, end: date):
     d = start
     while d <= end:
         yield d
         d += timedelta(days=1)
+
 
 campaigns = [
     "2026q1-demandgen-widget-us-prospecting-v1",
@@ -53,9 +55,20 @@ for d in daterange(start, end):
 
         revenue = conversions * random.uniform(60, 140)
 
-        rows_spend.append({"date": d.isoformat(), "channel": channels[c], "campaign": c, "spend": round(spend, 2)})
-        rows_clicks.append({"date": d.isoformat(), "campaign": c, "clicks": clicks, "impressions": impressions})
-        rows_conv.append({"date": d.isoformat(), "campaign": c, "conversions": conversions, "revenue": round(revenue, 2)})
+        rows_spend.append(
+            {"date": d.isoformat(), "channel": channels[c], "campaign": c, "spend": round(spend, 2)}
+        )
+        rows_clicks.append(
+            {"date": d.isoformat(), "campaign": c, "clicks": clicks, "impressions": impressions}
+        )
+        rows_conv.append(
+            {
+                "date": d.isoformat(),
+                "campaign": c,
+                "conversions": conversions,
+                "revenue": round(revenue, 2),
+            }
+        )
 
 out = Path("data")
 out.mkdir(parents=True, exist_ok=True)

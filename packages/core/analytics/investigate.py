@@ -35,6 +35,7 @@ Provide:
 - what to check next (actions)
 """
 
+
 def _exec_tools(plan: Plan, data_dir: str) -> list[dict]:
     bundle = load_data(data_dir)
     df_daily = daily_kpis(bundle)
@@ -44,13 +45,25 @@ def _exec_tools(plan: Plan, data_dir: str) -> list[dict]:
     for call in plan.calls:
         if call.tool == "weekly_kpis":
             df = weekly_aggregate(df_daily, week_start=call.week_start, by=call.by)
-            tool_runs.append({"tool": call.tool, "input": call.model_dump(), "rows": df.to_dict(orient="records")})
+            tool_runs.append(
+                {
+                    "tool": call.tool,
+                    "input": call.model_dump(),
+                    "rows": df.to_dict(orient="records"),
+                }
+            )
 
         elif call.tool == "kpi_delta":
             a = weekly_aggregate(df_daily, week_start=call.week_a_start, by=call.by)
             b = weekly_aggregate(df_daily, week_start=call.week_b_start, by=call.by)
             df = kpi_delta_fn(a, b, by=call.by)
-            tool_runs.append({"tool": call.tool, "input": call.model_dump(), "rows": df.to_dict(orient="records")})
+            tool_runs.append(
+                {
+                    "tool": call.tool,
+                    "input": call.model_dump(),
+                    "rows": df.to_dict(orient="records"),
+                }
+            )
 
         elif call.tool == "top_movers":
             a = weekly_aggregate(df_daily, week_start=call.week_a_start, by=call.by)
@@ -63,9 +76,16 @@ def _exec_tools(plan: Plan, data_dir: str) -> list[dict]:
                 ascending = False if call.direction == "improved" else True
 
             df = top_movers_fn(delta, kpi=call.kpi, n=call.n, ascending=ascending)
-            tool_runs.append({"tool": call.tool, "input": call.model_dump(), "rows": df.to_dict(orient="records")})
+            tool_runs.append(
+                {
+                    "tool": call.tool,
+                    "input": call.model_dump(),
+                    "rows": df.to_dict(orient="records"),
+                }
+            )
 
     return tool_runs
+
 
 async def investigate(question: str, week_start: str, data_dir: str = "data") -> dict:
     # Planner
@@ -85,7 +105,12 @@ async def investigate(question: str, week_start: str, data_dir: str = "data") ->
         # (you can improve this later: attempt to extract JSON substring)
         plan = Plan(
             calls=[
-                {"tool": "kpi_delta", "week_a_start": week_start, "week_b_start": week_start, "by": ["campaign"]}
+                {
+                    "tool": "kpi_delta",
+                    "week_a_start": week_start,
+                    "week_b_start": week_start,
+                    "by": ["campaign"],
+                }
             ]
         )
 

@@ -2,8 +2,10 @@ from __future__ import annotations
 import pandas as pd
 from .io import DataBundle
 
+
 def _safe_div(n: pd.Series, d: pd.Series) -> pd.Series:
     return n.div(d.where(d != 0))
+
 
 def daily_kpis(bundle: DataBundle) -> pd.DataFrame:
     df = (
@@ -19,6 +21,7 @@ def daily_kpis(bundle: DataBundle) -> pd.DataFrame:
     df["roas"] = _safe_div(df["revenue"], df["spend"])
 
     return df
+
 
 def weekly_aggregate(df_daily: pd.DataFrame, week_start: str, by: list[str]) -> pd.DataFrame:
     start = pd.Timestamp(week_start)

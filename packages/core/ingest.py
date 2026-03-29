@@ -8,10 +8,13 @@ from sqlalchemy.orm import Session
 from .models import Document, Chunk
 from .ollama import embed
 
+
 def _sha1(s: str) -> str:
     return hashlib.sha1(s.encode("utf-8")).hexdigest()
 
+
 _heading_re = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
+
 
 def split_by_headings(md: str) -> list[tuple[str, str]]:
     """
@@ -27,10 +30,11 @@ def split_by_headings(md: str) -> list[tuple[str, str]]:
         start = m.start()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(md)
         title = m.group(0).strip()
-        body = md[m.end():end].strip()
+        body = md[m.end() : end].strip()
         text = (title + "\n" + body).strip()
         sections.append((title, text))
     return sections
+
 
 def chunk_text(text: str, max_chars: int = 1400, overlap: int = 150) -> list[str]:
     paras = [p.strip() for p in text.split("\n\n") if p.strip()]
@@ -46,7 +50,7 @@ def chunk_text(text: str, max_chars: int = 1400, overlap: int = 150) -> list[str
         # if paragraph itself is huge, hard-split
         if len(p) > max_chars:
             for j in range(0, len(p), max_chars):
-                chunks.append(p[j:j + max_chars])
+                chunks.append(p[j : j + max_chars])
             buf = ""
         else:
             buf = p
@@ -60,6 +64,7 @@ def chunk_text(text: str, max_chars: int = 1400, overlap: int = 150) -> list[str
         return out
     return chunks
 
+
 def chunk_markdown(md: str, max_chars: int = 1400, overlap: int = 150) -> list[str]:
     sections = split_by_headings(md)
     out: list[str] = []
@@ -68,6 +73,7 @@ def chunk_markdown(md: str, max_chars: int = 1400, overlap: int = 150) -> list[s
             continue
         out.extend(chunk_text(sec_text, max_chars=max_chars, overlap=overlap))
     return out
+
 
 async def ingest_dir(session: Session, docs_path: str) -> dict:
     root = Path(docs_path)

@@ -16,6 +16,7 @@ def _detail_from_response(response: httpx.Response) -> str:
         pass
     return response.text[:300] or f"HTTP {response.status_code}"
 
+
 async def embed(text: str) -> list[float]:
     async with httpx.AsyncClient(timeout=60) as client:
         try:
@@ -33,6 +34,7 @@ async def embed(text: str) -> list[float]:
             ) from exc
         except httpx.RequestError as exc:
             raise OllamaError(f"Cannot reach Ollama at {OLLAMA_URL}") from exc
+
 
 async def chat(system: str, user: str) -> str:
     async with httpx.AsyncClient(timeout=120) as client:
