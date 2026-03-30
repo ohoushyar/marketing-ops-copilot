@@ -78,3 +78,32 @@ eval:
 	$(VENV)/bin/python scripts/eval.py
 
 .PHONY: eval
+
+demo-prep:
+	@set -euo pipefail; \
+	echo "==> Starting services (docker compose)"; \
+	docker compose up -d; \
+	echo "==> Pulling Ollama models"; \
+	docker compose exec ollama ollama pull $${OLLAMA_CHAT_MODEL:-llama3.1:8b}; \
+	docker compose exec ollama ollama pull $${OLLAMA_EMBED_MODEL:-nomic-embed-text}; \
+	echo "==> Demo prep complete"
+
+demo-check:
+	@set -euo pipefail; \
+	echo "==> Checking API health (API must already be running)"; \
+	curl -fsS http://localhost:8000/health > /dev/null; \
+	echo "==> OK"
+
+demo: demo-check
+	@set -euo pipefail; \
+	echo "==> API is running; starting demo"; \
+	echo "==> Generating mock data"; \
+	$(VENV)/bin/python scripts/generate_mock_data.py; \
+	echo "==> Ingesting docs"; \
+	$(COPILOT) ingest docs/; \
+	echo "==> Asking a docs question (RAG)"; \
+	$(COPILOT) ask "What UTMs are required and what formatting rules do we follow?" --citations; \
+	echo "==> Investigating performance (LLM + tools, grounded)"; \
+	$(COPILOT) investigate "Why did CAC rise last week? Identify the worst campaigns." --week "$${WEEK:-2026-03-16}" --by "$${BY:-campaign}" --n "$${N:-5}" --data-dir "$${DATA:-data}"
+
+.PHONY: demo
