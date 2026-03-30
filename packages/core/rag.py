@@ -48,11 +48,11 @@ def build_system_prompt() -> str:
 
 
 async def answer(session: Session, question: str) -> dict:
-    print(f"Answering question: {question}")
+    # print(f"Answering question: {question}")
     ctx = await retrieve(session, question)
     best_sim = max((c["similarity"] for c in ctx), default=0.0)
-    print("Retrieved chunks with similarities:", [(c["chunk_id"], c["similarity"]) for c in ctx])
-    print(f"Best similarity: {best_sim:.4f}")
+    # print("Retrieved chunks with similarities:", [(c["chunk_id"], c["similarity"]) for c in ctx])
+    # print(f"Best similarity: {best_sim:.4f}")
 
     if not ctx or best_sim < RAG_MIN_SIM:
         return {

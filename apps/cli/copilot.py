@@ -1,5 +1,5 @@
 import os
-from datetime import date, timedelta
+import json
 from typing import Optional
 
 import httpx
@@ -35,19 +35,34 @@ def _print_table(rows: list[dict], limit: Optional[int] = None) -> None:
 
 
 @app.command()
-def ingest(path: str = typer.Argument(..., help="Path to docs directory")):
+def ingest(
+    path: str = typer.Argument(..., help="Path to docs directory"),
+    json_output: bool = typer.Option(False, "--json", help="Print raw JSON response"),
+):
     data = _post("/ingest", {"path": path}, timeout=600)
+    if json_output:
+        typer.echo(json.dumps(data, indent=2, ensure_ascii=False))
+        return
     typer.echo(data)
 
 
 @app.command()
-def ask(question: str, citations: bool = typer.Option(False, "--citations")):
+def ask(
+    question: str,
+    citations: bool = typer.Option(False, "--citations"),
+    json_output: bool = typer.Option(False, "--json", help="Print raw JSON response"),
+):
     data = _post("/chat", {"question": question, "citations": citations}, timeout=300)
+    if json_output:
+        typer.echo(json.dumps(data, indent=2, ensure_ascii=False))
+        return
     typer.echo(data["answer"])
     if citations and data.get("citations"):
         typer.echo("\nCitations:")
         for c in data["citations"]:
             typer.echo(f"- {c['source_path']}#{c['chunk_id']}")
+    if data.get("run_id"):
+        typer.echo(f"Run: {data['run_id']}")
 
 
 @app.command()
@@ -59,10 +74,14 @@ def kpi(
     data_dir: str = typer.Option(
         "data", "--data-dir", help="Directory containing spend.csv/clicks.csv/conversions.csv"
     ),
+    json_output: bool = typer.Option(False, "--json", help="Print raw JSON response"),
 ):
     by_cols = [b.strip() for b in by.split(",") if b.strip()]
     payload = {"week_start": week, "by": by_cols, "data_dir": data_dir}
     resp = _post("/analytics/weekly_kpis", payload, timeout=120)
+    if json_output:
+        typer.echo(json.dumps(resp, indent=2, ensure_ascii=False))
+        return
     _print_table(resp["rows"])
 
 
@@ -76,6 +95,7 @@ def investigate(
     show_tools: bool = typer.Option(
         True, "--show-tools/--no-show-tools", help="Print tool outputs"
     ),
+    json_output: bool = typer.Option(False, "--json", help="Print raw JSON response"),
 ):
     """
     Day 4 investigation:
@@ -97,6 +117,10 @@ def investigate(
         timeout=300,
     )
 
+    if json_output:
+        typer.echo(json.dumps(resp, indent=2, ensure_ascii=False))
+        return
+
     typer.echo(resp["answer"])
 
     if show_tools:
@@ -105,6 +129,9 @@ def investigate(
             typer.echo(f"\n[{i}] tool={tr.get('tool')}")
             typer.echo(f"input={tr.get('input')}")
             _print_table(tr.get("rows", []), limit=20)
+
+    if resp.get("run_id"):
+        typer.echo(f"Run: {resp['run_id']}")
 
 
 @app.command()
