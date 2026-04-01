@@ -5,9 +5,11 @@ from typing import Optional
 import httpx
 import typer
 
-app = typer.Typer(no_args_is_help=True)
+from packages.core.settings import settings
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+API_BASE_URL = os.environ.get("API_BASE_URL", settings.api_base_url)
+
+app = typer.Typer(no_args_is_help=True)
 
 
 def _post(path: str, payload: dict, timeout: float = 60.0) -> dict:

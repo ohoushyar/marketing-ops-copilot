@@ -17,6 +17,7 @@ from packages.core.analytics.compare import kpi_delta as kpi_delta_fn, top_mover
 from packages.core.analytics.validate import ALLOWED_GROUP_BY
 from packages.core.analytics.logging import summarize_rows
 from packages.core.models import Run, ToolRun
+from packages.core.settings import settings
 
 
 app = FastAPI(title="Marketing Ops Copilot")
@@ -175,7 +176,7 @@ async def analytics_investigate(req: InvestigateRequest):
                     run_id=run_id,
                     tool=str(tr.get("tool")),
                     input_json=json.dumps(tr.get("input", {})),
-                    output_json=summarize_rows(tr.get("rows", []), max_rows=50),
+                    output_json=summarize_rows(tr.get("rows", []), max_rows=settings.analytics_max_rows),
                 )
             )
 

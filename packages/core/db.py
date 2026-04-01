@@ -1,9 +1,9 @@
-import os
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+from .settings import settings
+
+DATABASE_URL = settings.database_url
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set. Add it to your environment or .env file.")
 
