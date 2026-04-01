@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Optional
+import uuid
 
 import httpx
 import typer
@@ -8,12 +9,25 @@ import typer
 from packages.core.settings import settings
 
 API_BASE_URL = os.environ.get("API_BASE_URL", settings.api_base_url)
+REQUEST_ID: str | None = None
 
 app = typer.Typer(no_args_is_help=True)
 
 
+@app.callback()
+def _main():
+    """
+    Runs before every command; sets a single request id for this CLI invocation.
+    """
+    global REQUEST_ID
+    REQUEST_ID = str(uuid.uuid4())
+    typer.echo(f"Request-ID: {REQUEST_ID}", err=True)
+
+
 def _post(path: str, payload: dict, timeout: float = 60.0) -> dict:
-    r = httpx.post(f"{API_BASE_URL}{path}", json=payload, timeout=timeout)
+    rid = REQUEST_ID or str(uuid.uuid4())
+    headers = {"X-Request-ID": rid}
+    r = httpx.post(f"{API_BASE_URL}{path}", json=payload, timeout=timeout, headers=headers)
     r.raise_for_status()
     return r.json()
 

@@ -1,7 +1,9 @@
 import uuid
 import json
+import time
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
 from sqlalchemy import text
@@ -21,6 +23,23 @@ from packages.core.settings import settings
 
 
 app = FastAPI(title="Marketing Ops Copilot")
+
+
+class RequestIdMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        rid = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        request.state.request_id = rid
+
+        start = time.perf_counter()
+        response = await call_next(request)
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+
+        response.headers["X-Request-ID"] = rid
+        response.headers["X-Response-Time-ms"] = f"{elapsed_ms:.2f}"
+        return response
+
+
+app.add_middleware(RequestIdMiddleware)
 
 
 class IngestRequest(BaseModel):
@@ -142,7 +161,7 @@ class InvestigateRequest(BaseModel):
 
 
 @app.post("/analytics/investigate")
-async def analytics_investigate(req: InvestigateRequest):
+async def analytics_investigate(req: InvestigateRequest, request: Request):
     bad = [b for b in req.by if b not in ALLOWED_GROUP_BY]
     if bad:
         raise HTTPException(
@@ -163,7 +182,7 @@ async def analytics_investigate(req: InvestigateRequest):
             Run(
                 id=run_id,
                 kind="analytics_investigate",
-                input=json.dumps(req.model_dump()),
+                input=json.dumps({**req.model_dump(), "request_id": getattr(request.state, "request_id", None)}),
                 output=res.get("answer", ""),
             )
         )
