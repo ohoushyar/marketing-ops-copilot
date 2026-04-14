@@ -1,5 +1,14 @@
 description: "Analytics Investigate evals for /analytics/investigate (tool-grounded)"
 
+prompts:
+  - label: investigate_request
+    raw: |
+      Investigate question: {{question}}
+      week_start={{week_start}}
+      by={{by}}
+      n={{n}}
+      data_dir={{data_dir}}
+
 providers:
   - id: http
     config:

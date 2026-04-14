@@ -1,5 +1,11 @@
 description: "Docs RAG evals for /chat (citations + grounded answers)"
 
+prompts:
+  - label: chat_request
+    raw: |
+      Chat question: {{question}}
+      citations=true
+
 providers:
   - id: http
     config:
