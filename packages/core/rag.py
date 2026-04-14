@@ -82,7 +82,8 @@ async def answer(session: Session, question: str) -> dict:
         if c["chunk_id"] in cited_chunks
     ]
 
-    # If no explicit citations found, include the most similar chunk
+    # Preserve the API contract by returning the top retrieved chunk when the
+    # model answer omits inline citation markers.
     if not citations and ctx:
         citations = [{"source_path": ctx[0]["source_path"], "chunk_id": ctx[0]["chunk_id"]}]
 

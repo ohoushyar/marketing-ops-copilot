@@ -74,10 +74,28 @@ test:
 
 .PHONY: help venv up down pull-models dev ingest ask lint fmt test kpi investigate gen-data
 
-eval:
-	$(VENV)/bin/python scripts/eval.py
+eval-prep:
+	@set -euo pipefail; \
+	echo "==> Starting services"; \
+	docker compose up -d; \
+	echo "==> Pulling Ollama models (if needed)"; \
+	docker compose exec ollama ollama pull $${OLLAMA_CHAT_MODEL:-llama3.1:8b}; \
+	docker compose exec ollama ollama pull $${OLLAMA_EMBED_MODEL:-nomic-embed-text}; \
+	echo "==> Ingesting eval fixture docs"; \
+	$(COPILOT) ingest eval/fixtures/docs/
 
-.PHONY: eval
+eval:
+	@set -euo pipefail; \
+	echo "==> Running Promptfoo evals (API must already be running)"; \
+	promptfoo eval -c promptfoo/chat.promptfooconfig.yaml; \
+	promptfoo eval -c promptfoo/investigate.promptfooconfig.yaml
+
+.PHONY: eval-prep eval
+
+# eval:
+# 	$(VENV)/bin/python scripts/eval.py
+# 
+# .PHONY: eval
 
 demo-prep:
 	@set -euo pipefail; \

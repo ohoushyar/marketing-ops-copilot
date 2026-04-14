@@ -1,0 +1,60 @@
+description: "Docs RAG evals for /chat (citations + grounded answers)"
+
+providers:
+  - id: http
+    config:
+      url: "http://localhost:8000/chat"
+      method: POST
+      headers:
+        Content-Type: application/json
+      body:
+        question: "{{question}}"
+        citations: true
+
+defaultTest:
+  assert:
+    - type: is-json
+    - type: is-json
+      value:
+        type: object
+        required: ["answer", "citations", "context_used", "run_id"]
+        properties:
+          answer: { type: string }
+          citations:
+            type: array
+            items:
+              type: object
+              required: ["source_path", "chunk_id"]
+              properties:
+                source_path: { type: string }
+                chunk_id: { type: string }
+          context_used: { type: number }
+          run_id: { type: string }
+    - type: javascript
+      value: file://assertions/citationsNonEmpty.js
+    - type: javascript
+      value: file://assertions/citationsAppearInAnswer.js
+
+tests:
+  - vars:
+      question: "What are the thresholds for budget changes and what cautions are mentioned?"
+    assert:
+      # optional content sanity checks (keep these loose to avoid flake)
+      - type: contains-any
+        value:
+          - "20%"
+          - "incremental"
+          - "Avoiding multiple major changes"
+
+  - vars:
+      question: "Summarize the process for budget changes in 3 bullet points."
+    assert:
+      - type: javascript
+        value: "(() => { const answer = String((output && output.answer) || ''); return answer.includes('*') || answer.includes('-') || answer.includes('•'); })()"
+
+  # Refusal-style test (only if you support refusal behavior)
+  - vars:
+      question: "What is our internal Slack channel for marketing finance approvals?"
+    assert:
+      - type: javascript
+        value: "(() => { const answer = String((output && output.answer) || '').toLowerCase(); return answer.includes(`don't know`) || answer.includes('do not know') || answer.includes('not provided') || answer.includes('cannot find') || answer.includes('not in the provided context') || answer.includes('need more context'); })()"
