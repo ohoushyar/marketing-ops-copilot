@@ -2,7 +2,7 @@ import uuid
 import json
 import time
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Depends
 from starlette.middleware.base import BaseHTTPMiddleware
 from pydantic import BaseModel, Field
 from typing import Literal
@@ -20,6 +20,8 @@ from packages.core.analytics.validate import ALLOWED_GROUP_BY
 from packages.core.analytics.logging import summarize_rows
 from packages.core.models import Run, ToolRun
 from packages.core.settings import settings
+
+from apps.api.auth import get_current_user
 
 
 app = FastAPI(title="Marketing Ops Copilot")
@@ -87,24 +89,34 @@ def health():
 
 
 @app.post("/ingest")
-async def ingest(req: IngestRequest):
+async def ingest(req: IngestRequest, user_login: str = Depends(get_current_user)):
     with SessionLocal() as session:
         stats = await ingest_dir(session, req.path)
         run_id = str(uuid.uuid4())
-        session.add(Run(id=run_id, kind="ingest", input=req.path, output=str(stats)))
+        session.add(
+            Run(id=run_id, kind="ingest", user_login=user_login, input=req.path, output=str(stats))
+        )
         session.commit()
     return {"run_id": run_id, **stats}
 
 
 @app.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, user_login: str = Depends(get_current_user)):
     with SessionLocal() as session:
         try:
             res = await answer(session, req.question)
         except OllamaError as exc:
             raise HTTPException(status_code=502, detail=str(exc)) from exc
         run_id = str(uuid.uuid4())
-        session.add(Run(id=run_id, kind="chat", input=req.question, output=res["answer"]))
+        session.add(
+            Run(
+                id=run_id,
+                kind="chat",
+                user_login=user_login,
+                input=req.question,
+                output=res["answer"],
+            )
+        )
         session.commit()
     if not req.citations:
         res["citations"] = []
@@ -161,7 +173,9 @@ class InvestigateRequest(BaseModel):
 
 
 @app.post("/analytics/investigate")
-async def analytics_investigate(req: InvestigateRequest, request: Request):
+async def analytics_investigate(
+    req: InvestigateRequest, request: Request, user_login: str = Depends(get_current_user)
+):
     bad = [b for b in req.by if b not in ALLOWED_GROUP_BY]
     if bad:
         raise HTTPException(
@@ -182,7 +196,10 @@ async def analytics_investigate(req: InvestigateRequest, request: Request):
             Run(
                 id=run_id,
                 kind="analytics_investigate",
-                input=json.dumps({**req.model_dump(), "request_id": getattr(request.state, "request_id", None)}),
+                user_login=user_login,
+                input=json.dumps(
+                    {**req.model_dump(), "request_id": getattr(request.state, "request_id", None)}
+                ),
                 output=res.get("answer", ""),
             )
         )
@@ -195,7 +212,10 @@ async def analytics_investigate(req: InvestigateRequest, request: Request):
                     run_id=run_id,
                     tool=str(tr.get("tool")),
                     input_json=json.dumps(tr.get("input", {})),
-                    output_json=summarize_rows(tr.get("rows", []), max_rows=settings.analytics_max_rows),
+                    output_json=summarize_rows(
+                        tr.get("rows", []), max_rows=settings.analytics_max_rows
+                    ),
+                    user_login=user_login,
                 )
             )
 

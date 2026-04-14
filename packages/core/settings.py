@@ -70,5 +70,18 @@ class Settings(BaseSettings):
     # Analytics / logging safety limits
     analytics_max_rows: int = 50
 
+    # Auth
+    # Use JSON in env for reliability:
+    #   COPILOT_API_KEYS=["dev-key"]
+    #   COPILOT_API_KEY_MAP={"dev-key":"ohoushyar"}
+    copilot_api_keys: list[str] = Field(
+        default_factory=list,
+        validation_alias=AliasChoices("COPILOT_API_KEYS", "copilot_api_keys"),
+    )
+    copilot_api_key_map: dict[str, str] = Field(
+        default_factory=dict,
+        validation_alias=AliasChoices("COPILOT_API_KEY_MAP", "copilot_api_key_map"),
+    )
+
 
 settings = Settings()

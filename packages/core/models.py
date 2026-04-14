@@ -44,6 +44,7 @@ class Run(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
     input: Mapped[str] = mapped_column(Text)
     output: Mapped[str] = mapped_column(Text)
+    user_login: Mapped[str] = mapped_column(String, index=True, default="anonymous")
 
 
 class ToolRun(Base):
@@ -54,3 +55,4 @@ class ToolRun(Base):
     tool: Mapped[str] = mapped_column(String, index=True)
     input_json: Mapped[str] = mapped_column(Text)
     output_json: Mapped[str] = mapped_column(Text)
+    user_login: Mapped[str] = mapped_column(String, index=True, default="anonymous")

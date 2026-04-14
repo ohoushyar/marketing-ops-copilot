@@ -155,6 +155,23 @@ make investigate WEEK=2026-03-16 Q="Why did CAC rise last week?"
 
 ---
 
+## Auth (optional)
+
+By default, if no API keys are configured, the API runs in **anonymous mode**.
+
+To enable API key auth:
+
+1) Copy `.env.example` to `.env`
+2) Set:
+   - `COPILOT_API_KEYS=["dev-key"]`
+   - `COPILOT_API_KEY_MAP={"dev-key":"ohoushyar"}`
+3) In your shell:
+```bash
+export COPILOT_API_KEY=dev-key
+```
+
+---
+
 ## Development
 
 ### Lint / format / test

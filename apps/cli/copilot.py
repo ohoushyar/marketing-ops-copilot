@@ -9,6 +9,8 @@ import typer
 from packages.core.settings import settings
 
 API_BASE_URL = os.environ.get("API_BASE_URL", settings.api_base_url)
+API_KEY = os.environ.get("COPILOT_API_KEY")
+
 REQUEST_ID: str | None = None
 
 app = typer.Typer(no_args_is_help=True)
@@ -27,6 +29,9 @@ def _main():
 def _post(path: str, payload: dict, timeout: float = 60.0) -> dict:
     rid = REQUEST_ID or str(uuid.uuid4())
     headers = {"X-Request-ID": rid}
+    if API_KEY:
+        headers["X-API-Key"] = API_KEY
+
     r = httpx.post(f"{API_BASE_URL}{path}", json=payload, timeout=timeout, headers=headers)
     r.raise_for_status()
     return r.json()
